@@ -1,50 +1,57 @@
-# SiloCityPages
+![FilaMeter - Filament Inventory Manager](/public/images/logos/filameter-banner.png)
 
-This is a project to run a website, leveraging [Next.js](https://nextjs.org/), [React Bootstrap](https://react-bootstrap.netlify.app/) and hosted on GitHub Pages.
+**Your Open Source Filament Inventory Manager for 3D Printing**
 
-## Getting Started
+FilaMeter helps 3D printing enthusiasts and makers track, manage, and optimize their filament usage — locally and efficiently.
 
-To run the project locally:
+🌟 Key Features
+---------------
 
-```bash
-git clone git@github.com:SiloCityLabs/SiloCityPages.git
-cd SiloCityPages
-```
+*   📦 Track filament spools by type, weight, material and location
 
-```bash
-npm install
-```
+*   🆓 [5 Free QR Code labels for every new user](https://shop.silocitylabs.com/discount/1GHIW2TI?redirect=%2Fproducts%2Ffilameter-labels%3Fvariant%3D50812497920300)
+    
+*   📉 Consumption tracking inputs
+    
+*   🏠 100% local-first — no account or cloud sync *required*
+    
+*   🔄 Import/Export for easy backups and migration
+    
+*   🌐 Responsive UI powered by Next.js + React + TailwindCSS + PouchDB
 
-```bash
-npm run dev
-```
+*   🔗 [Short URL for QR Code redirects](https://github.com/SiloCityLabs/filameter.com/wiki/Creating-QR-Codes)
+    
 
-Open [http://localhost:3000](http://localhost:3000) in your browser to view the website.
+🚀 Why FilaMeter?
+-----------------
 
-## Website Setup
+*   No ads, subscriptions, or logins — just pure utility
+    
+*   Perfect for home labs, makerspaces, or small print farms
+  
+*   Run on Github Pages, Were not going anywhere anytime soon
+    
+*   Extendable and easy to self-host
+    
 
-- Copy .env.example and create .env.local and update values
-- Update package.json
-- Update manifest.json
-- Update sitemap.xml
-- Update GA_TRACKING_ID to implement Google Analytics
+📲 Try it Out
+-------------
 
-## Editing the Website
+Visit [filameter.com](https://filameter.com) or clone the repo to self-host.
 
-You can modify the main content of the site by editing the following files:
+![Screenshot of filameter spools page](/public/images/screenshots/spools-4-9-25.png)
 
-- app/pages.tsx: The main landing page of the website.
+🛠️ Setup Instructions
+----------------------
 
-- app/layout.tsx: The layout file for shared elements like headers or footers.
+- [Developer Setup](https://github.com/SiloCityLabs/filameter.com/wiki/Developer-Setup)
 
-The project auto-updates changes as you edit.
+📢 Contributing
+---------------
 
-## Deployment
+We welcome pull requests, issues, and feature ideas. Join the conversation or fork the project to make it your own.
 
-This website is hosted on GitHub Pages. To deploy updates create a PR, commit and push. When merged into master github actions will automatically build and deploy.
+🧾 License
+----------
 
-## Features
-
-- **Optimized Performance**: Uses [next/font](https://nextjs.org/docs/basic-features/font-optimization) for automatic font optimization.
-
-- **Modern Framework**: Built with the power of Next.js and React.
+CC-BY-SA-4.0 — use it, remix it, share it.

@@ -39,3 +39,8 @@ next-env.d.ts
 # ide
 .vscode
 .idx
+
+# Service Worker
+public/workbox-*
+public/sw.js
+public/sw.js.map

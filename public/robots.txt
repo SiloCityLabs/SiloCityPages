@@ -1,3 +1,3 @@
 User-agent: *
-Sitemap: https://filameter.com/sitemap.xml
+Sitemap: https://pages.silocitylabs.com/sitemap.xml
 Crawl-delay: 1

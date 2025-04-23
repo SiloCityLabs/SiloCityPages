@@ -4,8 +4,6 @@ import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
 // --- Components ---
 import GoogleAnalytics from "@/components/_silabs/GoogleAnalytics";
-import ClientDatabaseProviderWrapper from "@/components/ClientDatabaseProviderWrapper";
-import ServiceWorkerRegistrar from "@/components/ServiceWorkerRegistrar";
 
 // --- Styles ---
 import "bootstrap/dist/css/bootstrap.min.css";
@@ -49,17 +47,13 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={inter.className}>
-        <ClientDatabaseProviderWrapper>
-          {children}
-        </ClientDatabaseProviderWrapper>
+        {children}
 
         {GA_TRACKING_ID && (
           <Suspense fallback={null}>
             <GoogleAnalytics gaId={GA_TRACKING_ID} />
           </Suspense>
         )}
-
-        <ServiceWorkerRegistrar />
       </body>
     </html>
   );

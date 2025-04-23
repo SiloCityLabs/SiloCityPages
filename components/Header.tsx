@@ -13,14 +13,7 @@ interface HeaderProps {
 
 const defaultNavLinks = [
   { label: "Home", href: "/", target: "" },
-  { label: "Spools", href: "/spools", target: "" },
-  { label: "Settings", href: "/settings", target: "" },
   { label: "Feedback", href: "/feedback", target: "" },
-  {
-    label: "Products",
-    href: "https://shop.silocitylabs.com/collections/filameter",
-    target: "",
-  },
   {
     label: "GitHub",
     href: process.env.NEXT_PUBLIC_APP_GITHUB_URL || "",

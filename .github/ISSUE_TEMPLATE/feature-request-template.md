@@ -7,13 +7,10 @@ assignees: ''
 
 ---
 
-# Feature request
+# Problem
 
-Describe the feature you want to see added here.
+Describe the problem here and provide any examples that may be helpful.
 
+## Solution
 
-## Check list
-
- - [ ] I have searched the existing issues and this feature is not listed
- - [ ] I have made sure this feature is not already implemented
- - [ ] I have supported this project through a donation, spreading the word, or other means
+What you expect to see happen

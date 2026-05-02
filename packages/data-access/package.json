@@ -17,7 +17,7 @@
     "pouchdb-adapter-idb": "^9.0.0",
     "pouchdb-find": "^9.0.0",
     "joi": "^17.13.3",
-    "uuid": "^11.1.0"
+    "uuid": "^14.0.0"
   },
   "devDependencies": {
     "typescript": "^5.8.2",

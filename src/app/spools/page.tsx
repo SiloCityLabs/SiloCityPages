@@ -1,0 +1,281 @@
+'use client';
+
+// --- React ---
+import { useEffect, useState, useCallback } from 'react';
+import { Container, Spinner, Card } from 'react-bootstrap';
+// --- Next ---
+import { useSearchParams, useRouter, usePathname } from 'next/navigation';
+// --- Components ---
+import SpoolsHeader from '@/components/spools/SpoolsHeader';
+import SpoolsTable from '@/components/spools/SpoolsTable';
+import SpoolsPagination from '@/components/spools/SpoolsPagination';
+import SpoolsAlertDisplay from '@/components/spools/SpoolsAlertDisplay';
+// --- DB & Helpers ---
+import getAllFilaments from '@/helpers/database/filament/getAllFilaments';
+import getAllSettings from '@/helpers/database/settings/getAllSettings';
+import saveSettings from '@/helpers/database/settings/saveSettings';
+import { useDatabase } from '@/contexts/DatabaseContext';
+import { deleteRow, getDocumentByColumn } from '@silocitypages/data-access';
+import { useSync } from '@/hooks/useSync';
+// --- Types ---
+import type { sclSettings } from '@silocitypages/ui-core';
+import type { Filament } from '@/types/Filament';
+// --- Styles ---
+import styles from '@/public/styles/components/Spools.module.css';
+
+export default function SpoolsPage() {
+  const { dbs, isReady } = useDatabase();
+  const { updateLastModified, checkSyncTimestamp, syncCooldown } = useSync('');
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const pathname = usePathname();
+
+  const [isLoading, setIsLoading] = useState(true);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [showAlert, setShowAlert] = useState(false);
+  const [alertVariant, setAlertVariant] = useState('success');
+  const [alertMessage, setAlertMessage] = useState('');
+  const [data, setData] = useState<Filament[]>([]);
+  const [sortKey, setSortKey] = useState<keyof Filament | null>('_id');
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
+  const [settings, setSettings] = useState<sclSettings>({});
+  const [searchTerm, setSearchTerm] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
+  const [syncData, setSyncData] = useState<sclSettings>({});
+
+  const [isSpinning, setIsSpinning] = useState(false);
+
+  const fetchData = useCallback(async () => {
+    if (!dbs.filament || !dbs.settings) return;
+    setIsLoading(true);
+    try {
+      const [fetchedData, fetchedSettings] = await Promise.all([
+        getAllFilaments(dbs.filament),
+        getAllSettings(dbs.settings) as sclSettings,
+      ]);
+      setData(fetchedData);
+      setSettings(fetchedSettings);
+      setItemsPerPage(Number(fetchedSettings?.itemsPerPage || 10));
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to fetch initial data.';
+      setAlertMessage(errorMessage);
+      setShowAlert(true);
+      setAlertVariant('danger');
+    } finally {
+      setIsLoading(false);
+    }
+  }, [dbs.filament, dbs.settings]);
+
+  // --- Effects ---
+  useEffect(() => {
+    const alert_msg = searchParams?.get('alert_msg');
+    if (alert_msg) {
+      setShowAlert(true);
+      setAlertMessage(decodeURIComponent(alert_msg));
+      setAlertVariant(
+        alert_msg.toLowerCase().includes('error') || alert_msg.toLowerCase().includes('failed')
+          ? 'danger'
+          : 'success'
+      );
+      const newSearchParams = new URLSearchParams(searchParams.toString());
+      newSearchParams.delete('alert_msg');
+      const newUrl = `${pathname}${newSearchParams.toString() ? `?${newSearchParams.toString()}` : ''}`;
+      router.replace(newUrl, { scroll: false });
+    }
+  }, [searchParams, pathname, router]);
+
+  useEffect(() => {
+    if (isReady) fetchData();
+    else setIsLoading(true);
+  }, [isReady, fetchData]);
+
+  useEffect(() => {
+    async function fetchSyncData() {
+      if (dbs.settings) {
+        try {
+          const sclSync = await getDocumentByColumn(dbs.settings, 'name', 'scl-sync', 'settings');
+          if (sclSync && sclSync.value) setSyncData(JSON.parse(sclSync.value as string));
+        } catch (error) {
+          console.error('Error fetching sync data:', error);
+        }
+      }
+    }
+    if (isReady) fetchSyncData();
+  }, [dbs, isReady]);
+
+  // --- Handlers ---
+  const handleDelete = async (id: string | undefined) => {
+    if (!id || !window.confirm(`Are you sure you want to delete filament ID: ${id}?`)) return;
+    if (!dbs.filament) {
+      setAlertMessage('Database not available.');
+      setAlertVariant('warning');
+      setShowAlert(true);
+      return;
+    }
+    setIsDeleting(true);
+    try {
+      const success = await deleteRow(dbs.filament, id, 'filament');
+      if (success) {
+        await updateLastModified();
+        setAlertMessage('Filament deleted successfully.');
+        setAlertVariant('success');
+        setData((prev) => prev.filter((f) => f._id !== id));
+        // Adjust current page if the last item on it was deleted
+        const newTotalItems = filteredFilaments.length - 1;
+        const maxPage = Math.max(1, Math.ceil(newTotalItems / itemsPerPage));
+        if (currentPage > maxPage) setCurrentPage(maxPage);
+      } else {
+        setAlertMessage('Filament not found or deletion failed.');
+        setAlertVariant('warning');
+      }
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to delete filament.';
+      setAlertMessage(errorMessage);
+      setAlertVariant('danger');
+    } finally {
+      setShowAlert(true);
+      setIsDeleting(false);
+    }
+  };
+
+  const handleSortClick = useCallback(
+    (key: keyof Filament) => {
+      setSortDirection((prevDirection) =>
+        sortKey === key && prevDirection === 'asc' ? 'desc' : 'asc'
+      );
+      setSortKey(key);
+      setCurrentPage(1);
+    },
+    [sortKey]
+  );
+
+  const handleSearchChange = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchTerm(event.target.value);
+    setCurrentPage(1);
+  }, []);
+
+  const handleItemsPerPageChange = useCallback(
+    async (event: React.ChangeEvent<HTMLSelectElement>) => {
+      const newItemsPerPage = Number(event.target.value);
+      setItemsPerPage(newItemsPerPage);
+      setCurrentPage(1);
+      if (dbs.settings) {
+        try {
+          const newItemsPerPageValue = newItemsPerPage.toString();
+          const settingsToSave = { itemsPerPage: newItemsPerPageValue };
+
+          await saveSettings(dbs.settings, settingsToSave);
+
+          setSettings((prev) => ({
+            ...prev,
+            itemsPerPage: { ...(prev.itemsPerPage || {}), value: newItemsPerPageValue },
+          }));
+        } catch (error) {
+          console.error("Failed to save 'itemsPerPage' setting:", error);
+          setAlertMessage('Error saving settings.');
+          setAlertVariant('danger');
+          setShowAlert(true);
+        }
+      }
+    },
+    [dbs.settings]
+  );
+
+  const handleSync = async () => {
+    setIsSpinning(true);
+    await checkSyncTimestamp();
+    await fetchData();
+    setAlertMessage('Sync successful!');
+    setAlertVariant('success');
+    setShowAlert(true);
+    setIsSpinning(false);
+  };
+
+  // --- Data Processing ---
+  const filteredFilaments = data.filter((filament) => {
+    const searchString = searchTerm.toLowerCase().trim();
+    if (!searchString) return true;
+    return Object.values(filament).some((value) =>
+      String(value).toLowerCase().includes(searchString)
+    );
+  });
+
+  const sortedFilaments = [...filteredFilaments].sort((a, b) => {
+    if (!sortKey) return 0;
+    const aValue = a[sortKey] ?? '';
+    const bValue = b[sortKey] ?? '';
+    if (aValue < bValue) return sortDirection === 'asc' ? -1 : 1;
+    if (aValue > bValue) return sortDirection === 'asc' ? 1 : -1;
+    return 0;
+  });
+
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const currentItems = sortedFilaments.slice(indexOfFirstItem, indexOfLastItem);
+  const totalPages = Math.max(1, Math.ceil(sortedFilaments.length / itemsPerPage));
+
+  if (isLoading) {
+    return (
+      <Container className='text-center my-5'>
+        <Spinner animation='border' role='status' variant='primary'>
+          <span className='visually-hidden'>Loading spools...</span>
+        </Spinner>
+        <p className='mt-2 text-muted'>Loading spools...</p>
+      </Container>
+    );
+  }
+
+  return (
+    <div className={styles.spoolsPage}>
+      <Container>
+        <SpoolsHeader
+          isSpinning={isSpinning}
+          syncCooldown={syncCooldown}
+          syncKey={syncData?.syncKey}
+          onSync={handleSync}
+          searchTerm={searchTerm}
+          onSearchChange={handleSearchChange}
+        />
+        <Card className={styles.tableCard}>
+          <Card.Body>
+            {isSpinning ? (
+              <div
+                className='d-flex justify-content-center align-items-center'
+                style={{ minHeight: '300px' }}>
+                <Spinner animation='border' role='status'>
+                  <span className='visually-hidden'>Syncing...</span>
+                </Spinner>
+              </div>
+            ) : (
+              <>
+                <SpoolsAlertDisplay
+                  showAlert={showAlert}
+                  alertVariant={alertVariant}
+                  alertMessage={alertMessage}
+                  onClose={() => setShowAlert(false)}
+                />
+                <SpoolsTable
+                  currentItems={currentItems}
+                  isDeleting={isDeleting}
+                  settings={settings}
+                  onDelete={handleDelete}
+                  onSortClick={handleSortClick}
+                  sortKey={sortKey}
+                  sortDirection={sortDirection}
+                />
+                <SpoolsPagination
+                  currentPage={currentPage}
+                  totalPages={totalPages}
+                  itemsPerPage={itemsPerPage}
+                  onItemsPerPageChange={handleItemsPerPageChange}
+                  onPageChange={setCurrentPage}
+                />
+              </>
+            )}
+          </Card.Body>
+        </Card>
+      </Container>
+    </div>
+  );
+}

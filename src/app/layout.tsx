@@ -4,6 +4,7 @@ import type { Metadata, Viewport } from 'next';
 import { Inter } from 'next/font/google';
 // --- Components ---
 import { GoogleAnalytics } from '@silocitypages/ui-core';
+import ClientDatabaseProviderWrapper from '@/components/ClientDatabaseProviderWrapper';
 // --- Utils ---
 import { generateMetadata } from '@/utils/metadata';
 
@@ -28,7 +29,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
   return (
     <html lang='en'>
       <body className={inter.className}>
-        {children}
+        <ClientDatabaseProviderWrapper>{children}</ClientDatabaseProviderWrapper>
 
         {GA_TRACKING_ID && (
           <Suspense fallback={null}>

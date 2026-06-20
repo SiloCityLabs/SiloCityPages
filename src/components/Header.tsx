@@ -1,73 +1,84 @@
 'use client';
 
-// --- React ---
-import React from 'react';
-import { Container, Nav, Navbar, Badge } from 'react-bootstrap';
-// --- Next ---
-import Image from 'next/image';
+// --- React and Next.js ---
+import React, { useState, useEffect } from 'react';
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
+
+// --- Components ---
+import { Container, Nav, Navbar, Image } from 'react-bootstrap';
+
+// --- Styles ---
+import styles from '@/public/styles/components/Header.module.css';
+
+interface NavLink {
+  label: string;
+  href: string;
+  target?: string;
+}
 
 interface Props {
   className?: string;
-  navLinks?: { label: string; href: string; target?: string }[];
-  darkLinks?: boolean;
-  showBadge?: boolean;
-  logoUrl?: string;
-  logoWidth?: number | string;
-  logoHeight?: number | string;
+  navLinks?: NavLink[];
 }
 
-const defaultNavLinks = [
+const defaultNavLinks: NavLink[] = [
   { label: 'Home', href: '/', target: '' },
+  { label: 'Spools', href: '/spools', target: '' },
+  { label: 'Settings', href: '/settings', target: '' },
+  { label: 'FAQ', href: '/faq', target: '' },
   { label: 'Feedback', href: '/feedback', target: '' },
-  { label: 'GitHub', href: process.env.NEXT_PUBLIC_APP_GITHUB_URL || '', target: '_blank' },
+  { label: 'Products', href: '/products', target: '' },
 ];
 
-export default function Header({
-  className,
-  navLinks = defaultNavLinks,
-  darkLinks = false,
-  showBadge = false,
-  logoUrl,
-  logoWidth = 30,
-  logoHeight = 30,
-}: Props) {
-  navLinks = navLinks.length > 0 ? navLinks : defaultNavLinks;
+export default function Header({ className, navLinks }: Props) {
+  const [scrolled, setScrolled] = useState(false);
+  const pathname = usePathname();
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setScrolled(window.scrollY > 50);
+    };
+
+    window.addEventListener('scroll', handleScroll);
+
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+    };
+  }, []);
+
+  const finalNavLinks = navLinks && navLinks.length > 0 ? navLinks : defaultNavLinks;
 
   return (
-    <Navbar id='site-header' expand='lg' bg='dark' data-bs-theme='dark' className={`${className}`}>
+    <Navbar
+      id='site-header'
+      expand='lg'
+      fixed='top'
+      className={`${styles.navbar} ${scrolled ? styles.navbarScrolled : ''} ${className}`}>
       <Container>
-        <Navbar.Brand href='/' className='position-relative d-flex align-items-center'>
-          {logoUrl && (
-            <Image
-              src={logoUrl}
-              width={Number(logoWidth)}
-              height={Number(logoHeight)}
-              alt={`${process.env.NEXT_PUBLIC_APP_NAME || 'Site'} Logo`}
-              style={{ marginRight: '0.75rem' }}
-            />
-          )}
-          {showBadge && (
-            <Badge bg='warning' text='dark' style={{ fontSize: '.6rem', marginRight: '0.5rem' }}>
-              {process.env.NEXT_PUBLIC_NAVBAR_BRAND_BADGE}
-            </Badge>
-          )}
-          <div>
-            {process.env.NEXT_PUBLIC_APP_NAME}
-            {process.env.NEXT_PUBLIC_NAVBAR_BRAND_SUBTITLE && (
-              <span className='navbar-subtitle'>
-                {process.env.NEXT_PUBLIC_NAVBAR_BRAND_SUBTITLE}
-              </span>
-            )}
-          </div>
+        <Navbar.Brand as={Link} href='/' className='d-flex align-items-center'>
+          <Image
+            src='/images/logos/filameter-banner-slim-blue.webp'
+            alt='FilaMeter Logo'
+            className={styles.logo}
+            onError={(e: React.SyntheticEvent<HTMLImageElement, Event>) => {
+              e.currentTarget.src = 'https://placehold.co/120x40/117ace/ffffff?text=FilaMeter';
+              e.currentTarget.onerror = null;
+            }}
+          />
         </Navbar.Brand>
-        <Navbar.Toggle
-          aria-controls='basic-navbar-nav'
-          className={darkLinks ? 'black-toggler' : ''}
-        />
+        <Navbar.Toggle aria-controls='basic-navbar-nav' className={styles.navbarToggler} />
         <Navbar.Collapse id='basic-navbar-nav'>
-          <Nav className='me-auto'>
-            {navLinks.map((link, index) => (
-              <Nav.Link key={index} href={link.href} target={link.target ? link.target : '_self'}>
+          <Nav className={`ms-auto ${styles.mainNav}`}>
+            {finalNavLinks.map((link) => (
+              <Nav.Link
+                key={link.href}
+                as={link.target === '_blank' ? 'a' : Link}
+                href={link.href}
+                target={link.target}
+                rel={link.target === '_blank' ? 'noopener noreferrer' : undefined}
+                className={styles.navLink}
+                active={pathname === link.href}>
                 {link.label}
               </Nav.Link>
             ))}

@@ -35,27 +35,22 @@ export default function PageLayout({
   navLinks = [],
   showHeader = true,
   showFooter = true,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   headerDarkLinks = false,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   headerShowBadge = false,
   containerClassName = '',
   contentClassName = '',
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   headerLogoUrl,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   headerLogoWidth,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   headerLogoHeight,
 }: PageLayoutProps) {
   return (
     <div className={`main-container ${containerClassName}`}>
-      {showHeader && (
-        <Header
-          className={headerClassName}
-          navLinks={navLinks}
-          darkLinks={headerDarkLinks}
-          showBadge={headerShowBadge}
-          logoUrl={headerLogoUrl}
-          logoWidth={headerLogoWidth}
-          logoHeight={headerLogoHeight}
-        />
-      )}
+      {showHeader && <Header className={headerClassName} navLinks={navLinks} />}
       <main className={`main-content ${contentClassName}`}>{children}</main>
       {showFooter && <Footer className={footerClassName} />}
     </div>
